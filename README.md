@@ -8,40 +8,22 @@ Custom clang-tidy checks for enforcing MagDrag C++ coding standards.
 - CMake 3.13.4 or higher
 - C++17 compiler
 
-### Installing Dependencies
+## Integration
 
-#### Ubuntu/Debian
-```
-sudo apt-get install llvm-dev libclang-dev clang cmake
-```
+1. Add the following to your project's CMakeLists.txt:
 
-#### macOS
-```
-brew install llvm cmake
-```
+```cmake
+include(FetchContent)
 
-## Building
-```
-mkdir build && cd build
-cmake ..
-make
-```
-
-This will create a plugin library in `build/lib/`.
-
-## Usage
-
-1. Set the environment variable to point to the plugin:
-```
-# Linux
-export CLANG_TIDY_PLUGIN_PATH=/path/to/build/lib/MagDragNamingCheck.so
-
-# macOS
-export CLANG_TIDY_PLUGIN_PATH=/path/to/build/lib/MagDragNamingCheck.dylib
+FetchContent_Declare(
+  magdrag_checks
+  URL https://github.com/yourusername/MagDragClangTidyChecks/releases/download/v1.0.0/magdrag-checks.tar.gz
+)
+FetchContent_MakeAvailable(magdrag_checks)
 ```
 
 2. Create a `.clang-tidy` file in your project root with:
-```
+```yaml
 Checks: >
   *,
   magdrag-naming-check,
@@ -77,22 +59,72 @@ CheckOptions:
 ```
 
 3. Run clang-tidy:
-```
+```bash
 clang-tidy your_file.cpp
+```
+
+## CI Integration
+
+For GitLab CI, add this to your `.gitlab-ci.yml`:
+
+```yaml
+lint-clang_tidy-job:
+  stage: Lint
+  image: alpine:3.13
+  before_script:
+    - apk update
+    - apk add --no-cache bash cmake clang clang-extra-tools build-base gcc g++ musl-dev
+  script:
+    - echo "Running clang-tidy checks..."
+    - cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+    # Older versions of clang-tidy (like in Alpine 3.13) don't support --config-file
+    # Instead, we read the config file and pass its contents directly via --config
+    - |
+      CLANG_TIDY_CONFIG=$(cat ${CI_PROJECT_DIR}/.clang-tidy)
+      clang-tidy -p build ${CI_PROJECT_DIR}/src/*.cpp --config="$CLANG_TIDY_CONFIG"
+    - echo "Clang-tidy checks completed."
+```
+
+For GitHub Actions, add this to your workflow:
+
+```yaml
+lint:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v3
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake llvm-dev libclang-dev clang clang-tidy
+    - name: Build and run clang-tidy
+      run: |
+        cmake -B build
+        cmake --build build
+        find . -name "*.cpp" -o -name "*.hpp" | xargs clang-tidy
 ```
 
 ## Naming Conventions Enforced
 
-- Class/struct variables: `variable_name__O`
-- Container variables: `container_name__C`
-- Enum variables: `enum_name__E`
+### Variables
+- Regular variables: `snake_case` (e.g., `player_score`, `current_state`)
+- Class/struct member variables: `variable_name__O` (e.g., `player_data__O`, `game_state__O`)
+- Container variables: `container_name__C` (e.g., `player_list__C`, `score_map__C`)
+- Enum variables: `enum_name__E` (e.g., `player_state__E`, `game_mode__E`)
 - Typedef variables: Resolved to either `__O` or `__C` based on underlying type
-- Global variables: `GLOBAL_NAME`
-- Function names: `camelCase`
-- Class/struct declarations: `PascalCase`
-- Enum declarations: `PascalCaseE`
-- Typedef declarations: `PascalCaseT`
+- Global variables: `UPPER_CASE` (e.g., `MAX_PLAYERS`, `DEFAULT_TIMEOUT`)
+- Static const variables: `UPPER_CASE` (e.g., `STATIC_BUFFER_SIZE`)
 
-## Integration Guide
+### Functions & Methods
+- Function names: `camelCase` (e.g., `calculateScore`, `updatePlayerState`)
+- Method names: `camelCase` (e.g., `getValue`, `setPosition`)
 
-For instructions on how to integrate these checks into your repository, see [INTEGRATION.md](INTEGRATION.md).
+### Types
+- Class declarations: `PascalCase` (e.g., `PlayerManager`, `GameState`)
+- Struct declarations: `PascalCase` (e.g., `PlayerData`, `ConfigSettings`)
+- Enum declarations: `PascalCaseE` (e.g., `PlayerStateE`, `GameModeE`)
+- Typedef declarations: `PascalCaseT` (e.g., `PlayerIdT`, `ScoreTypeT`)
+
+### Other
+- Macro definitions: `UPPER_CASE` (e.g., `DEBUG_MODE`, `MAX_BUFFER_SIZE`)
+- Namespace names: `snake_case` (e.g., `game_logic`, `utils`)
+- Template parameters: `PascalCase` (e.g., `template<typename DataType>`)

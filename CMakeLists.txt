@@ -36,7 +36,23 @@ if(UNIX)
     PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
     PREFIX ""
-    OUTPUT_NAME "MagDragNamingCheck"  # Ensure consistent naming
+    OUTPUT_NAME "MagDragNamingCheck"
+  )
+elseif(WIN32)
+  set_target_properties(MagDragNamingCheck
+    PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+    PREFIX ""
+    SUFFIX ".dll"
+    OUTPUT_NAME "MagDragNamingCheck"
+  )
+endif()
+
+# Add Windows-specific compile definitions
+if(WIN32)
+  target_compile_definitions(MagDragNamingCheck PRIVATE
+    _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
+    _CRT_SECURE_NO_WARNINGS
   )
 endif()
 
@@ -50,4 +66,54 @@ target_link_libraries(MagDragNamingCheck
   clangBasic
   clangLex
   LLVMSupport
+)
+
+# Version information
+set(MAGDRAG_VERSION_MAJOR 1)
+set(MAGDRAG_VERSION_MINOR 0)
+set(MAGDRAG_VERSION_PATCH 0)
+set(MAGDRAG_VERSION "${MAGDRAG_VERSION_MAJOR}.${MAGDRAG_VERSION_MINOR}.${MAGDRAG_VERSION_PATCH}")
+
+# Configure version header
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/Version.h.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/include/Version.h"
+)
+
+include(CMakePackageConfigHelpers)
+
+# Install targets
+install(TARGETS MagDragNamingCheck
+  EXPORT MagDragChecksTargets
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION lib
+  ARCHIVE DESTINATION lib
+)
+
+install(DIRECTORY include/
+  DESTINATION include
+)
+
+# Generate and install package files
+configure_package_config_file(
+  cmake/MagDragChecksConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/MagDragChecksConfig.cmake
+  INSTALL_DESTINATION lib/cmake/MagDragChecks
+)
+
+write_basic_package_version_file(
+  ${CMAKE_CURRENT_BINARY_DIR}/MagDragChecksConfigVersion.cmake
+  VERSION ${MAGDRAG_VERSION}
+  COMPATIBILITY SameMajorVersion
+)
+
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/MagDragChecksConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/MagDragChecksConfigVersion.cmake
+  DESTINATION lib/cmake/MagDragChecks
+)
+
+install(EXPORT MagDragChecksTargets
+  FILE MagDragChecksTargets.cmake
+  DESTINATION lib/cmake/MagDragChecks
 ) 

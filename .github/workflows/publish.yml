@@ -1,0 +1,37 @@
+name: Publish Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Build Package
+      run: |
+        mkdir -p build
+        cd build
+        cmake ..
+        make
+
+    - name: Package Library
+      run: |
+        mkdir -p package/lib
+        cp build/lib/MagDragNamingCheck.so package/lib/
+        cp -r include package/
+        tar czf magdrag-checks.tar.gz package/
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: magdrag-checks.tar.gz
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

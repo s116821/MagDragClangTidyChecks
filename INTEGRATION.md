@@ -1,102 +1,56 @@
-# Integrating MagDrag Clang-Tidy Checks
+# Integration Guide
 
-This guide explains how to integrate these checks into your C++ repository.
+## Adding to Your Project
 
-## Method 1: Git Submodule (Recommended)
+1. Add the following to your project's CMakeLists.txt:
 
-1. Add this repository as a submodule:
-```
-git submodule add https://github.com/yourusername/MagDragClangTidyChecks.git src/inc/external/MagDragClangTidyChecks
-git submodule update --init --recursive
-```
+```cmake
+include(FetchContent)
 
-2. Add to your CMakeLists.txt:
-```
-add_subdirectory(external/MagDragClangTidyChecks)
-```
-
-3. Copy the `.clang-tidy` configuration from the README.md to your repository root.
-
-4. Set up pre-commit hooks (optional):
-
-Create `.git/hooks/pre-commit`:
-```
-#!/bin/bash
-
-# Check for clang-format and clang-tidy
-if ! command -v clang-format &> /dev/null; then
-    echo "clang-format not found. Please install it."
-    exit 1
-fi
-
-if ! command -v clang-tidy &> /dev/null; then
-    echo "clang-tidy not found. Please install it."
-    exit 1
-fi
-
-# Set plugin path
-export CLANG_TIDY_PLUGIN_PATH="$(git rev-parse --show-toplevel)/external/MagDragClangTidyChecks/build/lib/MagDragNamingCheck.so"
-
-# Get all staged C++ files
-files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E "\.(cpp|hpp|h|cc|cxx)$")
-
-if [ -n "$files" ]; then
-    # Run clang-format
-    echo "Running clang-format..."
-    for file in $files; do
-        clang-format -i "$file"
-        git add "$file"
-    done
-
-    # Run clang-tidy
-    echo "Running clang-tidy..."
-    for file in $files; do
-        clang-tidy "$file" -fix
-        git add "$file"
-    done
-fi
-
-exit 0
+FetchContent_Declare(
+  magdrag_checks
+  URL https://github.com/yourusername/MagDragClangTidyChecks/releases/download/v1.0.0/magdrag-checks.tar.gz
+)
+FetchContent_MakeAvailable(magdrag_checks)
 ```
 
-Make it executable:
-```
-chmod +x .git/hooks/pre-commit
+2. Create a `.clang-tidy` file in your project root (see configuration in README.md)
+
+3. Run clang-tidy:
+```bash
+clang-tidy your_file.cpp
 ```
 
-## Method 2: Manual Installation
+## CI Integration
 
-1. Clone and build this repository:
-```
-git clone https://github.com/yourusername/MagDragClangTidyChecks.git
-cd MagDragClangTidyChecks
-mkdir build && cd build
-cmake ..
-make
-```
+For GitLab CI, add this to your `.gitlab-ci.yml`:
 
-2. Set the environment variable in your shell profile:
-```
-# Add to ~/.bashrc or ~/.zshrc
-export CLANG_TIDY_PLUGIN_PATH="/path/to/MagDragClangTidyChecks/build/lib/MagDragNamingCheck.so"
-```
-
-3. Copy the `.clang-tidy` configuration from the README.md to your repository root.
-
-## IDE Integration
-
-### Visual Studio Code
-1. Install the "clang-tidy" extension
-2. Add to settings.json:
-```
-{
-    "clang-tidy.executable": "clang-tidy",
-    "clang-tidy.checks": ["magdrag-naming-check"],
-    "clang-tidy.compilerArgs": [],
-    "clang-tidy.buildPath": "${workspaceFolder}/build"
-}
+```yaml
+clang_tidy:
+  stage: lint
+  image: ubuntu:latest
+  before_script:
+    - apt-get update && apt-get install -y cmake llvm-dev libclang-dev clang clang-tidy
+  script:
+    - cmake -B build
+    - cmake --build build
+    - find . -name "*.cpp" -o -name "*.hpp" | xargs clang-tidy
 ```
 
-### CLion
-1. Enable clang-tidy under Settings → Editor → Inspections → C/C++ → Clang-Tidy
-2. Add the environment variable to your run configurations
+For GitHub Actions, add this to your workflow:
+
+```yaml
+lint:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v3
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake llvm-dev libclang-dev clang clang-tidy
+    - name: Build and run clang-tidy
+      run: |
+        cmake -B build
+        cmake --build build
+        find . -name "*.cpp" -o -name "*.hpp" | xargs clang-tidy
+```
