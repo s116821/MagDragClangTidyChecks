@@ -18,12 +18,12 @@ add_definitions(${LLVM_DEFINITIONS})
 set(CMAKE_CXX_STANDARD 17)
 
 # Create the clang-tidy plugin library
-add_library(MagDragNamingCheck MODULE
+add_library(MagDragClangTidyNamingCheck MODULE
   src/magDragNamingCheck.cpp
 )
 
 # Add include directories for the plugin
-target_include_directories(MagDragNamingCheck PRIVATE
+target_include_directories(MagDragClangTidyNamingCheck PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   ${CMAKE_CURRENT_SOURCE_DIR}/src/inc
   ${LLVM_INCLUDE_DIRS}
@@ -32,32 +32,32 @@ target_include_directories(MagDragNamingCheck PRIVATE
 
 # Set output properties for the library
 if(UNIX)
-  set_target_properties(MagDragNamingCheck
+  set_target_properties(MagDragClangTidyNamingCheck
     PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
     PREFIX ""
-    OUTPUT_NAME "MagDragNamingCheck"
+    OUTPUT_NAME "MagDragClangTidyNamingCheck"
   )
 elseif(WIN32)
-  set_target_properties(MagDragNamingCheck
+  set_target_properties(MagDragClangTidyNamingCheck
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
     PREFIX ""
     SUFFIX ".dll"
-    OUTPUT_NAME "MagDragNamingCheck"
+    OUTPUT_NAME "MagDragClangTidyNamingCheck"
   )
 endif()
 
 # Add Windows-specific compile definitions
 if(WIN32)
-  target_compile_definitions(MagDragNamingCheck PRIVATE
+  target_compile_definitions(MagDragClangTidyNamingCheck PRIVATE
     _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
     _CRT_SECURE_NO_WARNINGS
   )
 endif()
 
 # Link against required LLVM/Clang libraries
-target_link_libraries(MagDragNamingCheck
+target_link_libraries(MagDragClangTidyNamingCheck
   PRIVATE
   clangTidy
   clangTidyUtils
@@ -83,8 +83,8 @@ configure_file(
 include(CMakePackageConfigHelpers)
 
 # Install targets
-install(TARGETS MagDragNamingCheck
-  EXPORT MagDragChecksTargets
+install(TARGETS MagDragClangTidyNamingCheck
+  EXPORT MagDragClangTidyChecksTargets
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib
   ARCHIVE DESTINATION lib
@@ -96,24 +96,24 @@ install(DIRECTORY include/
 
 # Generate and install package files
 configure_package_config_file(
-  cmake/MagDragChecksConfig.cmake
-  ${CMAKE_CURRENT_BINARY_DIR}/MagDragChecksConfig.cmake
-  INSTALL_DESTINATION lib/cmake/MagDragChecks
+  cmake/MagDragClangTidyChecksConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/MagDragClangTidyChecksConfig.cmake
+  INSTALL_DESTINATION lib/cmake/MagDragClangTidyChecks
 )
 
 write_basic_package_version_file(
-  ${CMAKE_CURRENT_BINARY_DIR}/MagDragChecksConfigVersion.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/MagDragClangTidyChecksConfigVersion.cmake
   VERSION ${MAGDRAG_VERSION}
   COMPATIBILITY SameMajorVersion
 )
 
 install(FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/MagDragChecksConfig.cmake
-  ${CMAKE_CURRENT_BINARY_DIR}/MagDragChecksConfigVersion.cmake
-  DESTINATION lib/cmake/MagDragChecks
+  ${CMAKE_CURRENT_BINARY_DIR}/MagDragClangTidyChecksConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/MagDragClangTidyChecksConfigVersion.cmake
+  DESTINATION lib/cmake/MagDragClangTidyChecks
 )
 
-install(EXPORT MagDragChecksTargets
-  FILE MagDragChecksTargets.cmake
-  DESTINATION lib/cmake/MagDragChecks
+install(EXPORT MagDragClangTidyChecksTargets
+  FILE MagDragClangTidyChecksTargets.cmake
+  DESTINATION lib/cmake/MagDragClangTidyChecks
 ) 
