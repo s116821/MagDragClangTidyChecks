@@ -73,7 +73,7 @@ target_link_libraries(MagDragClangTidyNamingCheck
 # Version information
 set(MAGDRAG_VERSION_MAJOR 1)
 set(MAGDRAG_VERSION_MINOR 0)
-set(MAGDRAG_VERSION_PATCH 6)
+set(MAGDRAG_VERSION_PATCH 7)
 set(MAGDRAG_VERSION "${MAGDRAG_VERSION_MAJOR}.${MAGDRAG_VERSION_MINOR}.${MAGDRAG_VERSION_PATCH}")
 
 # Configure version header
