@@ -60,8 +60,17 @@ void MagDragNamingCheck::check(const MatchFinder::MatchResult &Result) {
   }
 }
 
+// Create a module class
+class MagDragModule : public ClangTidyModule {
+public:
+    void addCheckFactories(ClangTidyCheckFactories &Factories) override {
+        Factories.registerCheck<MagDragNamingCheck>(
+            "magdrag-naming-check");
+    }
+};
+
 } // namespace clang::tidy::naming
 
-// Register the check
-static clang::tidy::ClangTidyModuleRegistry::Add<clang::tidy::naming::MagDragNamingCheck>
-    X("magdrag-naming-check", "Enforces MagDrag naming conventions."); 
+// Register the module
+static clang::tidy::ClangTidyModuleRegistry::Add<clang::tidy::naming::MagDragModule>
+    X("magdrag", "Adds MagDrag naming convention checks."); 

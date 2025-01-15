@@ -23,6 +23,9 @@ private:
   bool isClass(QualType Type) const;
 };
 
+// Forward declare the module class
+class MagDragModule;
+
 } // namespace clang::tidy::naming
 
 #endif // MAGDRAG_NAMING_CHECK_H 
