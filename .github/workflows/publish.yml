@@ -1,37 +1,101 @@
-name: Publish Package
+name: Version and Publish
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - master
+      - develop
+    paths-ignore:
+      - 'VERSION'
+  pull_request:
+    types: [closed]
+    branches:
+      - master
+      - develop
 
 jobs:
-  build-and-publish:
+  version:
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
-
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build Package
-      run: |
-        mkdir -p build
-        cd build
-        cmake ..
-        make
+      - name: Update Version
+        run: |
+          # Read current version
+          version=$(cat VERSION)
+          IFS='.' read -r major minor patch <<< "$version"
+          
+          # Direct push to master branch
+          if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+            major=$((major + 1))
+            minor=0
+            patch=0
+          
+          # Direct push to develop branch
+          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            if [[ "${{ contains(github.event.pull_request.labels.*.name, 'feature') }}" == "true" ]]; then
+              minor=$((minor + 1))
+              patch=0
+            else
+              patch=$((patch + 1))
+            fi
+          
+          # Pull Request merges
+          else
+            if [[ "${{ contains(github.event.pull_request.labels.*.name, 'feature') }}" == "true" ]]; then
+              minor=$((minor + 1))
+              patch=0
+            else
+              patch=$((patch + 1))
+            fi
+          fi
+          
+          echo "${major}.${minor}.${patch}" > VERSION
+          
+          # Update CMakeLists.txt version
+          sed -i "s/set(MAGDRAG_VERSION_MAJOR [0-9]*)/set(MAGDRAG_VERSION_MAJOR ${major})/g" CMakeLists.txt
+          sed -i "s/set(MAGDRAG_VERSION_MINOR [0-9]*)/set(MAGDRAG_VERSION_MINOR ${minor})/g" CMakeLists.txt
+          sed -i "s/set(MAGDRAG_VERSION_PATCH [0-9]*)/set(MAGDRAG_VERSION_PATCH ${patch})/g" CMakeLists.txt
 
-    - name: Package Library
-      run: |
-        mkdir -p package/lib
-        cp build/lib/MagDragNamingCheck.so package/lib/
-        cp -r include package/
-        tar czf magdrag-checks.tar.gz package/
+      - name: Commit and Push Version Update
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add VERSION CMakeLists.txt
+          git commit -m "Bump version to $(cat VERSION)"
+          
+          if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+            git tag "v$(cat VERSION)"
+            git push --tags
+          fi
+          
+          git push
 
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: magdrag-checks.tar.gz
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+      - name: Build Package
+        if: github.ref == 'refs/heads/master'
+        run: |
+          mkdir -p build
+          cd build
+          cmake ..
+          make
+          cd ..
+          mkdir -p package/lib
+          cp build/lib/MagDragNamingCheck.so package/lib/
+          cp -r include package/
+          tar czf magdrag-checks.tar.gz package/
+
+      - name: Create GitHub Release
+        if: github.ref == 'refs/heads/master'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: "v$(cat VERSION)"
+          files: magdrag-checks.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

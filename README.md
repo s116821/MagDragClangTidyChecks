@@ -128,3 +128,13 @@ lint:
 - Macro definitions: `UPPER_CASE` (e.g., `DEBUG_MODE`, `MAX_BUFFER_SIZE`)
 - Namespace names: `snake_case` (e.g., `game_logic`, `utils`)
 - Template parameters: `PascalCase` (e.g., `template<typename DataType>`)
+
+## Versioning
+
+The package follows semantic versioning with automatic updates:
+
+- Direct pushes to master: Major version bump (e.g., 1.0.0 → 2.0.0)
+- PRs with 'feature' label: Minor version bump (e.g., 1.0.0 → 1.1.0)
+- Other PRs and develop branch pushes: Patch version bump (e.g., 1.0.0 → 1.0.1)
+
+New releases are automatically created on GitHub when changes are merged to master.
