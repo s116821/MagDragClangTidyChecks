@@ -32,23 +32,13 @@ jobs:
           version=$(cat VERSION)
           IFS='.' read -r major minor patch <<< "$version"
           
-          # Direct push to master branch
-          if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+          # Merge from develop to master
+          if [[ "${{ github.event.pull_request.merged }}" == "true" && "${{ github.base_ref }}" == "master" && "${{ github.head_ref }}" == "develop" ]]; then
             major=$((major + 1))
             minor=0
             patch=0
-          
-          # Direct push to develop branch
-          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
-            if [[ "${{ contains(github.event.pull_request.labels.*.name, 'feature') }}" == "true" ]]; then
-              minor=$((minor + 1))
-              patch=0
-            else
-              patch=$((patch + 1))
-            fi
-          
-          # Pull Request merges
-          else
+          # All other changes to master/develop
+          elif [[ "${{ github.ref }}" == "refs/heads/master" || "${{ github.ref }}" == "refs/heads/develop" || ("${{ github.event.pull_request.merged }}" == "true" && ("${{ github.base_ref }}" == "master" || "${{ github.base_ref }}" == "develop")) ]]; then
             if [[ "${{ contains(github.event.pull_request.labels.*.name, 'feature') }}" == "true" ]]; then
               minor=$((minor + 1))
               patch=0
@@ -74,12 +64,15 @@ jobs:
           if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
             git tag "v$(cat VERSION)"
             git push --tags
+          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            git tag "v$(cat VERSION)-dev"
+            git push --tags
           fi
           
           git push
 
       - name: Build Package
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
         run: |
           mkdir -p build
           cd build
@@ -87,15 +80,22 @@ jobs:
           make
           cd ..
           mkdir -p package/lib
-          cp build/lib/MagDragNamingCheck.so package/lib/
+          cp build/lib/MagDragClangTidyNamingCheck.so package/lib/
           cp -r include package/
-          tar czf magdrag-checks.tar.gz package/
+          
+          if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+            tar czf magdrag-checks.tar.gz package/
+          else
+            tar czf magdrag-checks-dev.tar.gz package/
+          fi
 
       - name: Create GitHub Release
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: "v$(cat VERSION)"
-          files: magdrag-checks.tar.gz
+          tag_name: ${{ github.ref == 'refs/heads/master' && format('v{0}', env.VERSION) || format('v{0}-dev', env.VERSION) }}
+          files: ${{ github.ref == 'refs/heads/master' && 'magdrag-checks.tar.gz' || 'magdrag-checks-dev.tar.gz' }}
+          prerelease: ${{ github.ref != 'refs/heads/master' }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
