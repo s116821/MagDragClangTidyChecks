@@ -15,7 +15,9 @@ include_directories(${CLANG_INCLUDE_DIRS})
 
 # Set additional compiler flags
 add_definitions(${LLVM_DEFINITIONS})
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Create the clang-tidy plugin library
 add_library(MagDragClangTidyNamingCheck MODULE
