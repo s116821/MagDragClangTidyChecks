@@ -1,11 +1,12 @@
-#ifndef MAGDRAG_CLANG_TIDY_NAMING_CHECK_H
-#define MAGDRAG_CLANG_TIDY_NAMING_CHECK_H
+#ifndef MAGDRAG_NAMING_CHECK_H
+#define MAGDRAG_NAMING_CHECK_H
 
-#include "clang-tidy/ClangTidy.h"
+#include <clang-tidy/ClangTidyCheck.h>
+#include <clang/AST/Type.h>
+#include <clang/ASTMatchers/ASTMatchFinder.h>
+#include <clang/ASTMatchers/ASTMatchers.h>
 
-namespace clang {
-namespace tidy {
-namespace naming {
+namespace clang::tidy::naming {
 
 class MagDragNamingCheck : public ClangTidyCheck {
 public:
@@ -22,8 +23,6 @@ private:
   bool isClass(QualType Type) const;
 };
 
-} // namespace naming
-} // namespace tidy
-} // namespace clang
+} // namespace clang::tidy::naming
 
-#endif 
+#endif // MAGDRAG_NAMING_CHECK_H 
