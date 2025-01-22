@@ -27,6 +27,7 @@ FetchContent_MakeAvailable(magdrag_checks)
 Checks: >
   *,
   magdrag-naming-check,
+  readability-identifier-naming,
   -fuchsia-*,
   -google-*,
   -zircon-*,
@@ -36,6 +37,7 @@ Checks: >
   -llvmlibc-*
 
 CheckOptions:
+  # Type Declarations
   - key: readability-identifier-naming.ClassCase
     value: CamelCase
   - key: readability-identifier-naming.StructCase
@@ -48,12 +50,30 @@ CheckOptions:
     value: CamelCase
   - key: readability-identifier-naming.TypedefSuffix
     value: T
+
+  # Functions & Methods
   - key: readability-identifier-naming.FunctionCase
     value: camelCase
+  - key: readability-identifier-naming.MethodCase
+    value: camelCase
+
+  # Variables
+  - key: readability-identifier-naming.MemberCase
+    value: lower_case
   - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.LocalVariableCase
     value: lower_case
   - key: readability-identifier-naming.GlobalVariableCase
     value: UPPER_CASE
+  - key: readability-identifier-naming.ConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.StaticConstantCase
+    value: UPPER_CASE
+
+  # Macros
   - key: readability-identifier-naming.MacroDefinitionCase
     value: UPPER_CASE
 ```
@@ -102,8 +122,12 @@ lint:
         cmake --build build
         find . -name "*.cpp" -o -name "*.hpp" | xargs clang-tidy
 ```
-
 ## Naming Conventions Enforced
+The naming conventions are enforced through a combination of:
+1. Built-in clang-tidy readability-identifier-naming checks (for basic case styles like PascalCase, camelCase, etc.)
+2. Custom MagDrag check (for special suffixes like __O, __C, __E)
+
+This dual approach ensures complete coverage of our naming requirements while leveraging existing clang-tidy capabilities where possible.
 
 ### Variables
 - Regular variables: `snake_case` (e.g., `player_score`, `current_state`)
@@ -126,8 +150,6 @@ lint:
 
 ### Other
 - Macro definitions: `UPPER_CASE` (e.g., `DEBUG_MODE`, `MAX_BUFFER_SIZE`)
-- Namespace names: `snake_case` (e.g., `game_logic`, `utils`)
-- Template parameters: `PascalCase` (e.g., `template<typename DataType>`)
 
 ## Versioning
 

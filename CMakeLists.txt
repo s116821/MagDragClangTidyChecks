@@ -10,10 +10,11 @@ find_package(Clang REQUIRED CONFIG)
 message(STATUS "Using ClangConfig.cmake in: ${Clang_DIR}")
 
 # Set include directories
-include_directories(${LLVM_INCLUDE_DIRS})
-include_directories(${CLANG_INCLUDE_DIRS})
+include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
+include_directories(SYSTEM ${CLANG_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-# Set additional compiler flags
+# Add compile definitions from LLVM
 add_definitions(${LLVM_DEFINITIONS})
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
