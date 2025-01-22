@@ -24,6 +24,9 @@ FetchContent_MakeAvailable(magdrag_checks)
 
 2. Create a `.clang-tidy` file in your project root with:
 ```yaml
+WarningsAsErrors: "*"
+HeaderFilterRegex: "^(.*/)?src/.*\\.(h|hpp|hxx|c|cpp|cxx)$"
+
 Checks: >
   *,
   magdrag-naming-check,
